@@ -29,23 +29,12 @@ Entrare nella directory
 cd frontend
 ```
 
-
-**2. Creare/Verificare la Rete Docker Condivisa** 
-
-Per permettere al frontend di comunicare con il container del backend (che si presume sia in esecuzione e connesso alla stessa rete), è necessaria una rete Docker condivisa. 
-
-Se hai già creato questa rete seguendo le istruzioni del backend (es. con nome order_app_network), puoi saltare questo passaggio. Altrimenti, creala con:
-
-```
-docker network create order_app_network
-```
-
-**3. Lanciare/costruire il container**
+**2. Lanciare/costruire il container**
 ```
 docker compose up --build -d
 ```
 
-**4. Entrare nel container e lanciare il server web**
+**3. Entrare nel container e lanciare il server web**
 ```
 docker exec -it frontend_angular_dev_env sh
 ```
