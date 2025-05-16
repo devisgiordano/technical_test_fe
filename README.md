@@ -1,59 +1,58 @@
-# Frontend
+# Progetto Frontend Gestione Ordini (Angular)
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 19.2.12.
+Questo è il frontend per l'applicazione di gestione degli ordini, sviluppato con Angular. Interagisce con un backend Symfony (eseguito separatamente) per visualizzare e gestire gli ordini. Il progetto è configurato per essere eseguito come microservizio Docker.
 
-## Development server
+## Prerequisiti
 
-To start a local development server, run:
+Prima di iniziare, assicurati di avere installato sul tuo sistema:
 
-```bash
-ng serve
+* **Git:** Per clonare il repository.
+* **Docker:** Per eseguire l'applicazione in container.
+* **Docker Compose:** Per orchestrare i container (solitamente incluso con Docker Desktop).
+* **(Opzionale) Node.js e npm/yarn:** Se desideri eseguire il frontend localmente senza Docker per lo sviluppo.
+
+
+## Installazione e Avvio con Docker
+
+Segui questi passaggi per installare ed eseguire il frontend utilizzando Docker:
+
+**1. Clonare il Repository del Frontend**
+
+
+
+```
+git clone https://github.com/devisgiordano/technical_test_fe.git frontend
 ```
 
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
-
-## Code scaffolding
-
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
-
-```bash
-ng generate component component-name
+Entrare nella directory
+```
+cd frontend
 ```
 
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
 
-```bash
-ng generate --help
+**2. Creare/Verificare la Rete Docker Condivisa** 
+
+Per permettere al frontend di comunicare con il container del backend (che si presume sia in esecuzione e connesso alla stessa rete), è necessaria una rete Docker condivisa. 
+
+Se hai già creato questa rete seguendo le istruzioni del backend (es. con nome order_app_network), puoi saltare questo passaggio. Altrimenti, creala con:
+
+```
+docker network create order_app_network
 ```
 
-## Building
-
-To build the project run:
-
-```bash
-ng build
+**3. Lanciare/costruire il container**
+```
+docker compose up --build -d
 ```
 
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
-
-## Running unit tests
-
-To execute unit tests with the [Karma](https://karma-runner.github.io) test runner, use the following command:
-
-```bash
-ng test
+**4. Entrare nel container e lanciare il server web**
+```
+docker exec -it frontend_angular_dev_env sh
 ```
 
-## Running end-to-end tests
+dalla cartella /app lanciare:
 
-For end-to-end (e2e) testing, run:
-
-```bash
-ng e2e
 ```
-
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
-
-## Additional Resources
-
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+ng serve --host 0.0.0.0 --port 4200 --poll 1000
+```
+il frontend sarà disponibile all'indirizzo: http://localhost:4200
