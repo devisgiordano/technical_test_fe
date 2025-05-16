@@ -1,0 +1,150 @@
+<div class="container mt-3 mb-5">
+  <h2><i class="bi bi-pencil-square me-2"></i>{{ pageTitle }}</h2>
+  <hr>
+
+  <div *ngIf="isLoading" class="text-center my-5">
+    <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;"></div>
+    <p class="mt-2">Caricamento dati ordine...</p>
+  </div>
+
+  <div *ngIf="errorMessage && !isSubmitting" class="alert alert-danger alert-dismissible fade show" role="alert">
+    <strong><i class="bi bi-exclamation-triangle-fill me-2"></i>Errore:</strong> {{ errorMessage }}
+    <button type="button" class="btn-close" (click)="errorMessage = null" aria-label="Close"></button>
+  </div>
+
+  <form [formGroup]="orderForm" (ngSubmit)="onSubmit()" *ngIf="!isLoading" novalidate>
+    <div class="card mb-4 shadow-sm">
+      <div class="card-header bg-light">
+        <h5 class="mb-0">Informazioni Principali</h5>
+      </div>
+      <div class="card-body">
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label for="orderNumber" class="form-label">Numero Ordine <span class="text-danger">*</span></label>
+            <input type="text" id="orderNumber" class="form-control" formControlName="orderNumber"
+                   [ngClass]="{ 'is-invalid': orderForm.get('orderNumber')?.invalid && orderForm.get('orderNumber')?.touched }">
+            <div *ngIf="orderForm.get('orderNumber')?.invalid && orderForm.get('orderNumber')?.touched" class="invalid-feedback">
+              Numero ordine è obbligatorio.
+            </div>
+          </div>
+
+          <div class="col-md-6">
+            <label for="customerName" class="form-label">Nome Cliente <span class="text-danger">*</span></label>
+            <input type="text" id="customerName" class="form-control" formControlName="customerName"
+                   [ngClass]="{ 'is-invalid': orderForm.get('customerName')?.invalid && orderForm.get('customerName')?.touched }">
+            <div *ngIf="orderForm.get('customerName')?.errors?.['required'] && orderForm.get('customerName')?.touched" class="invalid-feedback">
+              Nome cliente è obbligatorio.
+            </div>
+            <div *ngIf="orderForm.get('customerName')?.errors?.['minlength'] && orderForm.get('customerName')?.touched" class="invalid-feedback">
+              Nome cliente deve avere almeno 3 caratteri.
+            </div>
+          </div>
+
+          <div class="col-md-6">
+            <label for="orderDate" class="form-label">Data Ordine <span class="text-danger">*</span></label>
+            <input type="date" id="orderDate" class="form-control" formControlName="orderDate"
+                   [ngClass]="{ 'is-invalid': orderForm.get('orderDate')?.invalid && orderForm.get('orderDate')?.touched }">
+            <div *ngIf="orderForm.get('orderDate')?.invalid && orderForm.get('orderDate')?.touched" class="invalid-feedback">
+              Data ordine è obbligatoria.
+            </div>
+          </div>
+
+          <div class="col-md-6">
+            <label for="status" class="form-label">Stato Ordine <span class="text-danger">*</span></label>
+            <select id="status" class="form-select" formControlName="status"
+                    [ngClass]="{ 'is-invalid': orderForm.get('status')?.invalid && orderForm.get('status')?.touched }">
+              <option *ngFor="let s of availableStatuses" [value]="s">{{ s }}</option>
+            </select>
+            <div *ngIf="orderForm.get('status')?.invalid && orderForm.get('status')?.touched" class="invalid-feedback">
+              Stato ordine è obbligatorio.
+            </div>
+          </div>
+
+          <div class="col-12">
+            <label for="description" class="form-label">Descrizione Aggiuntiva</label>
+            <textarea id="description" class="form-control" formControlName="description" rows="3" placeholder="Note sull'ordine..."></textarea>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card mb-4 shadow-sm">
+      <div class="card-header bg-light d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">Prodotti <span class="text-danger">*</span></h5>
+        <button type="button" class="btn btn-sm btn-outline-success" (click)="addProduct()" title="Aggiungi Prodotto">
+          <i class="bi bi-plus-lg me-1"></i> Aggiungi Prodotto
+        </button>
+      </div>
+      <div class="card-body" formArrayName="products">
+        <div *ngIf="products.controls.length === 0 && orderForm.get('products')?.touched && orderForm.get('products')?.invalid" class="alert alert-warning text-center">
+          <i class="bi bi-exclamation-circle me-1"></i> L'ordine deve contenere almeno un prodotto.
+        </div>
+
+        <div *ngFor="let productCtrl of products.controls; let i=index" [formGroupName]="i" class="product-item mb-3 p-3 border rounded bg-white">
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <h6>Prodotto #{{i + 1}}</h6>
+            <button type="button" class="btn btn-sm btn-outline-danger" (click)="removeProduct(i)" title="Rimuovi Prodotto" [disabled]="products.controls.length <= 1">
+              <i class="bi bi-trash-fill"></i>
+            </button>
+          </div>
+          <div class="row g-3">
+            <div class="col-md-12">
+              <label for="productName-{{i}}" class="form-label">Nome Prodotto <span class="text-danger">*</span></label>
+              <input type="text" id="productName-{{i}}" class="form-control" formControlName="name" placeholder="Es. T-shirt"
+                     [ngClass]="{ 'is-invalid': getProductControl(i, 'name')?.invalid && getProductControl(i, 'name')?.touched }">
+              <div *ngIf="getProductControl(i, 'name')?.invalid && getProductControl(i, 'name')?.touched" class="invalid-feedback">
+                Nome prodotto obbligatorio.
+              </div>
+            </div>
+
+            <div class="col-md-6">
+              <label for="productQuantity-{{i}}" class="form-label">Quantità <span class="text-danger">*</span></label>
+              <input type="number" id="productQuantity-{{i}}" class="form-control" formControlName="quantity"
+                     [ngClass]="{ 'is-invalid': getProductControl(i, 'quantity')?.invalid && getProductControl(i, 'quantity')?.touched }">
+              <div *ngIf="getProductControl(i, 'quantity')?.errors?.['required'] && getProductControl(i, 'quantity')?.touched" class="invalid-feedback">
+                Quantità obbligatoria.
+              </div>
+              <div *ngIf="getProductControl(i, 'quantity')?.errors?.['min'] && getProductControl(i, 'quantity')?.touched" class="invalid-feedback">
+                Minimo 1.
+              </div>
+               <div *ngIf="getProductControl(i, 'quantity')?.errors?.['pattern'] && getProductControl(i, 'quantity')?.touched" class="invalid-feedback">
+                Solo numeri interi positivi.
+              </div>
+            </div>
+
+            <div class="col-md-6">
+              <label for="productPrice-{{i}}" class="form-label">Prezzo Unitario (€) <span class="text-danger">*</span></label>
+              <input type="number" id="productPrice-{{i}}" class="form-control" formControlName="price" step="0.01" placeholder="0.00"
+                     [ngClass]="{ 'is-invalid': getProductControl(i, 'price')?.invalid && getProductControl(i, 'price')?.touched }">
+              <div *ngIf="getProductControl(i, 'price')?.errors?.['required'] && getProductControl(i, 'price')?.touched" class="invalid-feedback">
+                 Prezzo obbligatorio.
+              </div>
+              <div *ngIf="getProductControl(i, 'price')?.errors?.['min'] && getProductControl(i, 'price')?.touched" class="invalid-feedback">
+                 Prezzo deve essere positivo.
+              </div>
+            </div>
+
+            <div class="col-12">
+              <label for="productDescription-{{i}}" class="form-label">Descrizione Prodotto</label>
+              <textarea id="productDescription-{{i}}" class="form-control" formControlName="description" rows="2" placeholder="Dettagli..."></textarea>
+            </div>
+          </div>
+        </div>
+        <div *ngIf="orderForm.get('products')?.errors?.['minlength'] && orderForm.get('products')?.touched && products.controls.length === 0" class="alert alert-danger mt-2">
+            È necessario aggiungere almeno un prodotto.
+        </div>
+      </div>
+    </div>
+
+    <div class="mt-4 d-flex justify-content-end">
+      <button type="button" class="btn btn-outline-secondary me-2" (click)="cancel()" [disabled]="isSubmitting">
+        <i class="bi bi-x-circle me-1"></i> Annulla
+      </button>
+      <button type="submit" class="btn btn-primary" [disabled]="orderForm.invalid || isSubmitting">
+        <span *ngIf="isSubmitting" class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+        <i *ngIf="!isSubmitting" class="bi bi-check-circle-fill me-1"></i>
+        {{ isEditMode ? 'Salva Modifiche' : 'Crea Ordine' }}
+      </button>
+    </div>
+  </form>
+</div>

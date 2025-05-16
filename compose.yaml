@@ -1,0 +1,46 @@
+version: "3.9"
+
+services:
+  # Servizio Frontend per lo SVILUPPO e per ESEGUIRE COMANDI NG
+  dev:
+    image: node:20-alpine
+    container_name: frontend_angular_dev_env # Nome del container di sviluppo
+    # La directory di lavoro '/app' nel container corrisponderà
+    # alla directory 'frontend/' sull'host.
+    working_dir: /app
+    command: sh -c "npm install -g @angular/cli@latest && echo 'Ambiente di sviluppo frontend pronto.' && tail -f /dev/null"
+    ports:
+      - "4200:4200" # Porta per 'ng serve'
+    volumes:
+      # Monta l'intera directory corrente (frontend/) dell'host
+      # in '/app' nel container.
+      - .:/app
+      - npm_cache_frontend_dev:/root/.npm
+    networks:
+      # Assicurati che 'shared_network_with_backend' sia il nome della rete Docker
+      # a cui anche il tuo container backend Symfony è connesso.
+      - shared_network_with_backend
+
+  # Servizio Frontend per la PRODUZIONE (Nginx)
+  prod:
+    build:
+      # Il contesto è la directory corrente (frontend/) dell'host,
+      # dove si trovano Dockerfile e compose.yaml.
+      context: .
+      dockerfile: Dockerfile
+    container_name: frontend_angular_prod_app # Nome del container di produzione
+    ports:
+      - "8080:80" # Mappa la porta Nginx (80 del container) alla 8080 dell'host
+    networks:
+      - shared_network_with_backend
+    restart: unless-stopped
+
+networks:
+  # Definisce la rete come esterna, assumendo che sia già stata creata.
+  # !!! MODIFICA 'nome_mia_rete_condivisa' con il nome REALE della tua rete Docker condivisa !!!
+  shared_network_with_backend:
+    external: true
+    name: app-network # Esempio: my_global_app_network
+
+volumes:
+  npm_cache_frontend_dev: # Volume per la cache di npm del servizio 'dev'

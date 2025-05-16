@@ -1,0 +1,89 @@
+<div class="container mt-3">
+  <div *ngIf="isLoading" class="text-center my-5">
+    <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
+      <span class="visually-hidden">Caricamento...</span>
+    </div>
+    <p class="mt-2">Caricamento dettaglio ordine...</p>
+  </div>
+
+  <div *ngIf="!isLoading && errorMessage" class="alert alert-danger alert-dismissible fade show" role="alert">
+    <strong><i class="bi bi-exclamation-triangle-fill me-2"></i>Errore:</strong> {{ errorMessage }}
+    <button type="button" class="btn-close" (click)="errorMessage = null; goBack();" aria-label="Close"></button>
+  </div>
+
+  <div *ngIf="order && !isLoading && !errorMessage" class="card shadow-sm">
+    <div class="card-header bg-light d-flex justify-content-between align-items-center">
+      <h3 class="mb-0"><i class="bi bi-file-earmark-text-fill me-2"></i>Dettaglio Ordine: #{{ order.orderNumber }}</h3>
+      <div>
+        <button (click)="editOrder()" class="btn btn-sm btn-warning me-2" title="Modifica Ordine">
+          <i class="bi bi-pencil-fill me-1"></i> Modifica
+        </button>
+        <button (click)="goBack()" class="btn btn-sm btn-outline-secondary" title="Torna all'elenco">
+          <i class="bi bi-arrow-left-circle-fill me-1"></i> Elenco
+        </button>
+      </div>
+    </div>
+    <div class="card-body">
+      <div class="row mb-3">
+        <div class="col-md-6">
+          <h5>Informazioni Cliente</h5>
+          <p><strong>Cliente:</strong> {{ order.customerName }}</p>
+          <p><strong>Numero Ordine:</strong> {{ order.orderNumber }}</p>
+        </div>
+        <div class="col-md-6">
+          <h5>Dettagli Ordine</h5>
+          <p><strong>Data Ordine:</strong> {{ order.orderDate | date:'fullDate' }} alle {{ order.orderDate | date:'shortTime' }}</p>
+          <p><strong>Stato:</strong>
+            <span class="badge fs-6" [ngClass]="{
+              'bg-secondary': order.status === 'Pending',
+              'bg-info text-dark': order.status === 'Processing',
+              'bg-primary': order.status === 'Shipped',
+              'bg-success': order.status === 'Delivered',
+              'bg-danger': order.status === 'Cancelled'
+            }">{{ order.status }}</span>
+          </p>
+        </div>
+      </div>
+      <div class="mb-3" *ngIf="order.description">
+        <h5>Descrizione Aggiuntiva</h5>
+        <p class="text-muted fst-italic">{{ order.description }}</p>
+      </div>
+
+      <hr>
+
+      <h4><i class="bi bi-basket3-fill me-2"></i>Prodotti nell'Ordine</h4>
+      <div *ngIf="order.products && order.products.length > 0; else noProducts" class="table-responsive mt-3">
+        <table class="table table-striped table-bordered table-sm">
+          <thead class="table-dark">
+            <tr>
+              <th>Nome Prodotto</th>
+              <th>Descrizione</th>
+              <th class="text-center">Quantità</th>
+              <th class="text-end">Prezzo Unit.</th>
+              <th class="text-end">Subtotale</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let product of order.products">
+              <td>{{ product.name }}</td>
+              <td>{{ product.description || '-' }}</td>
+              <td class="text-center">{{ product.quantity }}</td>
+              <td class="text-end">{{ product.price | currency:'EUR':'symbol':'1.2-2' }}</td>
+              <td class="text-end">{{ calculateProductSubtotal(product.price, product.quantity) | currency:'EUR':'symbol':'1.2-2' }}</td>
+            </tr>
+          </tbody>
+          <tfoot *ngIf="order.totalAmount != null"> <tr>
+              <td colspan="4" class="text-end fw-bold fs-5 pt-3">Importo Totale Ordine:</td>
+              <td class="text-end fw-bold fs-5 pt-3">{{ order.totalAmount | currency:'EUR':'symbol':'1.2-2' }}</td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+      <ng-template #noProducts>
+        <div class="alert alert-light text-center mt-3">
+          <i class="bi bi-emoji-frown me-2"></i>Nessun prodotto associato a questo ordine.
+        </div>
+      </ng-template>
+    </div>
+  </div>
+</div>

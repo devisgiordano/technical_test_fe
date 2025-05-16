@@ -1,0 +1,162 @@
+# File .gitignore per un progetto Angular
+
+# Log e file di output di compilazione
+# -----------------------------------
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+*.log
+logs
+*.pid
+*.seed
+*.pid.lock
+
+# Directory di output della build di Angular
+# ------------------------------------------
+/dist/
+/www/ # Per Ionic o altre build Cordova/Capacitor
+/platforms/ # Per Cordova/Capacitor
+/plugins/ # Per Cordova/Capacitor
+/coverage/ # Output dei test di copertura
+/.angular/cache # Cache di Angular CLI
+
+# Dipendenze (gestite da npm o yarn)
+# ------------------------------------
+# Non versionare mai la cartella node_modules
+/node_modules/
+/bower_components/
+
+# File di configurazione specifici dell'ambiente locale
+# ----------------------------------------------------
+# Non versionare file di ambiente che contengono segreti o configurazioni locali.
+# Usa file di esempio (es. .env.example) da versionare.
+.env
+.env.local
+.env.*.local
+# Eccezione per i file di esempio (se li usi)
+!.env.example
+!.env.sample
+
+# File specifici dell'IDE e del sistema operativo
+# ------------------------------------------------
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+# Icone personalizzate di macOS
+Icon?
+# File di thumbnail di macOS
+._*
+# File di risorse di macOS (es. per icone personalizzate)
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Visual Studio Code
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+*.code-workspace
+
+# JetBrains IDEs (WebStorm, IntelliJ, PhpStorm, ecc.)
+.idea/
+*.iml
+*.ipr
+*.iws
+# File di configurazione specifici del progetto JetBrains
+shelf/
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# Atom
+.atom/
+*.[Cc]ache
+*.[Ll]og
+*.[Bb]uild
+*.[Mm]ap
+
+# Netbeans
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+
+# File temporanei e di backup
+# ---------------------------
+*~
+*.swp
+*.swo
+*.bak
+*.tmp
+*.orig
+
+# File di configurazione specifici di alcuni tool
+# -----------------------------------------------
+# ESLint cache
+.eslintcache
+
+# TypeScript
+*.tsbuildinfo
+
+# Output di test specifici
+# -------------------------
+# JUnit report
+junit.xml
+# Cypress
+/cypress/videos/
+/cypress/screenshots/
+# Playwright
+/test-results/
+/playwright-report/
+
+# Altri
+# -----
+# Se usi Firebase, potresti voler ignorare i file generati
+# .firebase/
+# firebase-debug.log
+
+# File specifici di Windows
+# Desktop.ini
+# ehthumbs.db
+# Thumbs.db
+
+# Se usi Docker Compose per lo sviluppo e hai volumi nominati
+# che potrebbero creare cartelle sull'host in alcuni scenari (raro con la config attuale)
+# /npm_cache_frontend_dev/ # Esempio se il volume nominato creasse una cartella locale
+
+# File di configurazione Docker locali (se ne hai)
+# .dockerignore # Solitamente questo è versionato, ma se hai un .dockerignore.local per override locali
+# docker-compose.override.yml # Se usato per configurazioni locali che non vanno versionate
+
+# Se usi Capacitor/Ionic
+capacitor.config.json # Potrebbe contenere chiavi API, valuta se ignorarlo
+# www/
+# android/
+# ios/
+
+# Se usi Storybook
+# .storybook-static
+# .cache # Storybook cache
+
+# File di configurazione del proxy (proxy.conf.json)
+# Solitamente questo file è specifico per l'ambiente di sviluppo
+# e potrebbe contenere URL di backend locali.
+# Valuta se è meglio versionarlo (se è generico) o ignorarlo (se contiene info sensibili/locali).
+# Se è generico e utile a tutti gli sviluppatori, versionarlo è ok.
+# Se vuoi ignorarlo:
+# /proxy.conf.json
+# /proxy.conf.js
+
+# File di output di ngcc (vecchie versioni di Angular)
+# /.ngcc_lock_file/
+# /node_modules/.ngcc_lock_file
+
+# File di configurazione specifici per il tuo progetto che non vuoi versionare
+# my-local-config.json

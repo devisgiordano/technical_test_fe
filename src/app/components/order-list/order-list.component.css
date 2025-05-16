@@ -1,0 +1,19 @@
+/* File: frontend/src/app/components/order-list/order-list.component.css */
+.table th, .table td {
+  vertical-align: middle;
+}
+.table-hover tbody tr:hover {
+  background-color: #eef2f7; /* Leggero hover sulla riga */
+}
+.action-buttons button {
+  opacity: 0.6; /* Leggermente trasparenti di default */
+  transition: opacity 0.15s ease-in-out;
+}
+.table-hover tbody tr:hover .action-buttons button {
+  opacity: 1; /* Completamente visibili su hover della riga */
+}
+.badge {
+  font-size: 0.85em;
+  padding: 0.4em 0.65em;
+  font-weight: 500;
+}

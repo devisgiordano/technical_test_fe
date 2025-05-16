@@ -1,0 +1,94 @@
+<div class="container mt-3">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h2><i class="bi bi-card-list me-2"></i>Elenco Ordini</h2>
+    <a routerLink="/orders/new" class="btn btn-success">
+      <i class="bi bi-plus-circle-fill me-1"></i> Crea Nuovo Ordine
+    </a>
+  </div>
+
+  <div class="row mb-4 g-3 p-3 border rounded bg-light shadow-sm">
+    <div class="col-md-5">
+      <label for="searchTerm" class="form-label">Cerca per Cliente o Descrizione:</label>
+      <input type="text" id="searchTerm" class="form-control" placeholder="Es. Mario Rossi, Ordine urgente..."
+             [(ngModel)]="searchTerm" (input)="onSearchTermChanged($event)">
+    </div>
+    <div class="col-md-4">
+      <label for="filterDate" class="form-label">Filtra per Data Ordine:</label>
+      <input type="date" id="filterDate" class="form-control"
+             [(ngModel)]="filterDate" (change)="onDateChanged($event)">
+    </div>
+    <div class="col-md-3 d-flex align-items-end">
+      <button class="btn btn-primary w-100 me-2" (click)="applyFilters()" [disabled]="isLoading">
+        <i class="bi bi-funnel-fill me-1"></i> Applica
+      </button>
+      <button class="btn btn-outline-secondary w-100" (click)="clearFilters()" [disabled]="isLoading">
+        <i class="bi bi-eraser-fill me-1"></i> Pulisci
+      </button>
+    </div>
+  </div>
+
+  <div *ngIf="isLoading" class="text-center my-5">
+    <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
+      <span class="visually-hidden">Caricamento...</span>
+    </div>
+    <p class="mt-2">Caricamento ordini...</p>
+  </div>
+
+  <div *ngIf="!isLoading && errorMessage" class="alert alert-danger alert-dismissible fade show" role="alert">
+    <strong><i class="bi bi-exclamation-triangle-fill me-2"></i>Errore:</strong> {{ errorMessage }}
+    <button type="button" class="btn-close" (click)="errorMessage = null" aria-label="Close"></button>
+  </div>
+
+  <div *ngIf="!isLoading && !errorMessage && orders.length > 0" class="table-responsive shadow-sm">
+    <table class="table table-hover align-middle">
+      <thead class="table-light">
+        <tr>
+          <th>ID</th>
+          <th>N. Ordine</th>
+          <th>Cliente</th>
+          <th>Data</th>
+          <th>Descrizione</th>
+          <th>Stato</th>
+          <th class="text-end">Prodotti</th>
+          <th class="text-end">Totale</th>
+          <th class="text-center">Azioni</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let order of orders" (click)="viewOrderDetails(order.id)" style="cursor: pointer;">
+          <td>{{ order.id }}</td>
+          <td><strong>{{ order.orderNumber }}</strong></td>
+          <td>{{ order.customerName }}</td>
+          <td>{{ order.orderDate | date:'dd/MM/yyyy HH:mm' }}</td>
+          <td>{{ (order.description || '-') | slice:0:50 }}{{ (order.description && order.description.length > 50) ? '...' : '' }}</td>
+          <td>
+            <span class="badge" [ngClass]="{
+              'bg-secondary': order.status === 'Pending',
+              'bg-info text-dark': order.status === 'Processing',
+              'bg-primary': order.status === 'Shipped',
+              'bg-success': order.status === 'Delivered',
+              'bg-danger': order.status === 'Cancelled'
+            }">{{ order.status }}</span>
+          </td>
+          <td class="text-end">{{ order.products?.length || 0 }}</td>
+          <td class="text-end">{{ order.totalAmount | currency:'EUR':'symbol':'1.2-2' }}</td>
+          <td class="text-center action-buttons">
+            <button class="btn btn-sm btn-outline-primary me-1" (click)="viewOrderDetails(order.id); $event.stopPropagation();" title="Vedi Dettagli">
+              <i class="bi bi-eye-fill"></i>
+            </button>
+            <button class="btn btn-sm btn-outline-warning me-1" (click)="editOrder(order.id); $event.stopPropagation();" title="Modifica Ordine">
+              <i class="bi bi-pencil-fill"></i>
+            </button>
+            <button class="btn btn-sm btn-outline-danger" (click)="deleteOrder(order.id); $event.stopPropagation();" title="Elimina Ordine">
+              <i class="bi bi-trash-fill"></i>
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div *ngIf="!isLoading && !errorMessage && orders.length === 0" class="alert alert-info text-center mt-4">
+    <i class="bi bi-info-circle-fill me-2"></i>Nessun ordine trovato.
+  </div>
+</div>

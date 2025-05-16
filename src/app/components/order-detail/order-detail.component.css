@@ -1,0 +1,19 @@
+/* File: frontend/src/app/components/order-detail/order-detail.component.css */
+.card {
+  margin-top: 15px;
+}
+.card-header h3 {
+  font-size: 1.4rem;
+}
+.badge.fs-6 {
+  font-size: 0.9rem !important; /* Un po' più piccolo per coerenza */
+  padding: 0.5em 0.75em;
+}
+.table-dark th {
+  color: #fff;
+  background-color: #212529; /* Bootstrap dark */
+  border-color: #32383e;
+}
+.table-sm td, .table-sm th {
+    padding: .4rem .5rem; /* Padding ridotto per tabelle più compatte */
+}

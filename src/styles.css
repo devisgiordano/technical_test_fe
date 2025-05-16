@@ -1,0 +1,26 @@
+/* File: frontend/src/styles.css */
+@import "bootstrap/dist/css/bootstrap.min.css";
+@import "bootstrap-icons/font/bootstrap-icons.css";
+
+body {
+  padding-top: 70px; /* Altezza approx. della navbar fixed-top + un po' di margine */
+  padding-bottom: 80px; /* Spazio per il footer fixed-bottom + un po' di margine */
+  background-color: #f8f9fa; /* Sfondo leggermente grigio per il corpo */
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; /* Un font moderno e leggibile */
+}
+
+/* Stili globali aggiuntivi se necessario */
+.container {
+  max-width: 1200px; /* Larghezza massima per il contenuto principale */
+}
+
+/* Miglioramento visibilità focus per accessibilità */
+a:focus, button:focus, input:focus, select:focus, textarea:focus {
+  box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25); /* Bootstrap focus ring color */
+  outline: none;
+}
+
+/* Stili per i messaggi di alert globali se necessario */
+.alert {
+    font-size: 0.95rem;
+}
