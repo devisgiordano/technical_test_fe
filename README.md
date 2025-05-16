@@ -9,7 +9,7 @@ Prima di iniziare, assicurati di avere installato sul tuo sistema:
 * **Git:** Per clonare il repository.
 * **Docker:** Per eseguire l'applicazione in container.
 * **Docker Compose:** Per orchestrare i container (solitamente incluso con Docker Desktop).
-* **(Opzionale) Node.js e npm/yarn:** Se desideri eseguire il frontend localmente senza Docker per lo sviluppo.
+
 
 
 ## Installazione e Avvio con Docker
