@@ -2,53 +2,86 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams, HttpErrorResponse, HttpHeaders } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
-import { catchError, tap } from 'rxjs/operators';
-import { Order } from '../models/order.model'; // Assicurati che il path sia corretto
+import { catchError, tap, map } from 'rxjs/operators'; // Aggiunto 'map'
+import { Order } from '../models/order.model';
+
+// Interfaccia per la risposta della collezione da API Platform (basata sul tuo esempio)
+interface ApiPlatformOrderCollection {
+  '@context': string;
+  '@id': string;
+  '@type': 'Collection'; // O 'hydra:Collection', adatta se necessario
+  'totalItems': number;
+  'member': Order[];     // La lista effettiva degli ordini
+  'view'?: {
+    '@id'?: string;
+    '@type'?: string;
+  };
+  'search'?: any;
+  // Potrebbero esserci altri campi come 'hydra:view', 'hydra:search' a seconda della versione di API Platform
+  // e della configurazione. L'importante è 'member'.
+}
 
 @Injectable({
   providedIn: 'root'
 })
 export class OrderService {
-  private apiUrl = '/api/orders'; // Placeholder URL base
+  private apiUrl = '/api/orders';
 
-  // Opzioni HTTP per le richieste POST e PUT
   private httpOptions = {
     headers: new HttpHeaders({
-      // API Platform si aspetta 'application/ld+json' per le operazioni di scrittura
       'Content-Type': 'application/ld+json',
-      'Accept': 'application/ld+json, application/json' // Accetta ld+json o json semplice in risposta
-      // 'Authorization': 'Bearer TUO_TOKEN_JWT' // Se usi autenticazione
+      'Accept': 'application/ld+json, application/json'
     })
   };
 
-  // Opzioni HTTP per le richieste GET e DELETE (non inviano un corpo JSON)
   private httpGetDeleteOptions = {
     headers: new HttpHeaders({
       'Accept': 'application/ld+json, application/json'
-      // 'Authorization': 'Bearer TUO_TOKEN_JWT' // Se usi autenticazione
     })
   };
-
 
   constructor(private http: HttpClient) { }
 
   getOrders(filterDate?: string, searchTerm?: string): Observable<Order[]> {
     let params = new HttpParams();
     if (filterDate) {
-      params = params.append('date', filterDate); // Es: /api/orders?date=2024-12-25
+      params = params.append('date', filterDate);
     }
     if (searchTerm && searchTerm.trim() !== '') {
-      params = params.append('customerName', searchTerm.trim()); // Es: /api/orders?search=Mario
+      // Assicurati che il backend si aspetti 'customerName' per la ricerca generica,
+      // o adatta il nome del parametro in base ai filtri SearchFilter definiti nell'entità Order.
+      // Esempio: se SearchFilter è su 'customerName' e 'description'
+      // potresti inviare params = params.append('customerName', searchTerm.trim());
+      // o params = params.append('description', searchTerm.trim());
+      // o un parametro generico se hai un filtro custom nel backend.
+      // Per ora, manteniamo 'customerName' come nell'esempio precedente.
+      params = params.append('customerName', searchTerm.trim());
     }
-    return this.http.get<Order[]>(this.apiUrl, { params, headers: this.httpGetDeleteOptions.headers })
+
+    // HttpClient ora si aspetta una risposta di tipo ApiPlatformOrderCollection
+    return this.http.get<ApiPlatformOrderCollection>(this.apiUrl, { params, headers: this.httpGetDeleteOptions.headers })
       .pipe(
-        tap(orders => console.log(`[OrderService] Fetched ${orders.length} orders`, orders)),
+        // Usa l'operatore 'map' per trasformare la risposta
+        map(response => {
+          // Stampa la risposta completa per debug, se necessario
+          console.log('[OrderService] Risposta completa da getOrders:', response);
+          // Estrai e restituisci solo l'array 'member'
+          if (response && response.member) {
+            return response.member;
+          }
+          // Se 'member' non è presente, restituisci un array vuoto o gestisci l'errore
+          console.warn('[OrderService] La risposta API non contiene la proprietà "member". Restituzione array vuoto.');
+          return [];
+        }),
+        tap(orders => console.log(`[OrderService] Fetched and mapped ${orders.length} orders`, orders)),
         catchError(this.handleError)
       );
   }
 
   getOrderById(id: string | number): Observable<Order> {
     const url = `${this.apiUrl}/${id}`;
+    // Per GET singolo, API Platform di solito restituisce direttamente l'oggetto Order, non una collezione.
+    // Quindi non è necessario 'map' qui, a meno che anche il GET singolo non sia avvolto.
     return this.http.get<Order>(url, this.httpGetDeleteOptions)
       .pipe(
         tap(order => console.log(`[OrderService] Fetched order id=${id}:`, order)),
@@ -57,8 +90,6 @@ export class OrderService {
   }
 
   createOrder(orderData: Omit<Order, 'id' | 'totalAmount'>): Observable<Order> {
-    // Il payload deve essere conforme a quanto si aspetta il backend per Order e OrderItem
-    // Specialmente per le relazioni (es. product IRI in orderItems)
     return this.http.post<Order>(this.apiUrl, orderData, this.httpOptions)
       .pipe(
         tap(newOrder => console.log('[OrderService] Created order:', newOrder)),
@@ -90,7 +121,6 @@ export class OrderService {
       errorMessage = `Errore del client: ${error.error.message}`;
     } else {
       errorMessage = `Errore dal server (Codice: ${error.status}): ${error.message || error.statusText}`;
-      // Tentativo di estrarre dettagli dall'errore JSON di API Platform
       if (error.error && typeof error.error === 'object') {
         const serverError = error.error;
         const details = serverError.detail || serverError.title || serverError['hydra:description'] || serverError['hydra:title'] || JSON.stringify(serverError);

@@ -70,7 +70,7 @@
               'bg-danger': order.status === 'Cancelled'
             }">{{ order.status }}</span>
           </td>
-          <td class="text-end">{{ order.orderItems?.length || 0 }}</td>
+          <td class="text-end">{{ order.products?.length || 0 }}</td>
           <td class="text-end">{{ order.totalAmount | currency:'EUR':'symbol':'1.2-2' }}</td>
           <td class="text-center action-buttons">
             <button class="btn btn-sm btn-outline-primary me-1" (click)="viewOrderDetails(order.id); $event.stopPropagation();" title="Vedi Dettagli">
