@@ -10,7 +10,9 @@
     <div class="col-md-5">
       <label for="searchTerm" class="form-label">Cerca per Cliente o Descrizione:</label>
       <input type="text" id="searchTerm" class="form-control" placeholder="Es. Mario Rossi, Ordine urgente..."
-             [(ngModel)]="searchTerm" (input)="onSearchTermChanged($event)">
+             [(ngModel)]="searchTerm">
+             <!-- <input type="text" id="searchTerm" class="form-control" placeholder="Es. Mario Rossi, Ordine urgente..."
+             [(ngModel)]="searchTerm" (input)="onSearchTermChanged($event)"> -->
     </div>
     <div class="col-md-4">
       <label for="filterDate" class="form-label">Filtra per Data Ordine:</label>
@@ -19,7 +21,7 @@
     </div>
     <div class="col-md-3 d-flex align-items-end">
       <button class="btn btn-primary w-100 me-2" (click)="applyFilters()" [disabled]="isLoading">
-        <i class="bi bi-funnel-fill me-1"></i> Applica
+        <i class="bi bi-search me-1"></i> Cerca
       </button>
       <button class="btn btn-outline-secondary w-100" (click)="clearFilters()" [disabled]="isLoading">
         <i class="bi bi-eraser-fill me-1"></i> Pulisci
@@ -70,7 +72,7 @@
               'bg-danger': order.status === 'Cancelled'
             }">{{ order.status }}</span>
           </td>
-          <td class="text-end">{{ order.products?.length || 0 }}</td>
+          <td class="text-end">{{ order.orderItems?.length || 0 }}</td>
           <td class="text-end">{{ order.totalAmount | currency:'EUR':'symbol':'1.2-2' }}</td>
           <td class="text-center action-buttons">
             <button class="btn btn-sm btn-outline-primary me-1" (click)="viewOrderDetails(order.id); $event.stopPropagation();" title="Vedi Dettagli">

@@ -1,114 +1,101 @@
-// File: frontend/src/app/services/order.service.ts
+// src/app/services/order.service.ts
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams, HttpErrorResponse, HttpHeaders } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
-import { catchError, tap, map } from 'rxjs/operators'; // Aggiunto 'map'
-import { Order } from '../models/order.model';
-
-// Interfaccia per la risposta della collezione da API Platform (basata sul tuo esempio)
-interface ApiPlatformOrderCollection {
-  '@context': string;
-  '@id': string;
-  '@type': 'Collection'; // O 'hydra:Collection', adatta se necessario
-  'totalItems': number;
-  'member': Order[];     // La lista effettiva degli ordini
-  'view'?: {
-    '@id'?: string;
-    '@type'?: string;
-  };
-  'search'?: any;
-  // Potrebbero esserci altri campi come 'hydra:view', 'hydra:search' a seconda della versione di API Platform
-  // e della configurazione. L'importante è 'member'.
-}
+import { catchError, tap, map } from 'rxjs/operators';
+import { Order, BackendOrderItemPayload } from '../models/order.model'; // Assicurati che i modelli siano corretti
 
 @Injectable({
   providedIn: 'root'
 })
 export class OrderService {
-  private apiUrl = '/api/orders';
+  // L'URL base per le API degli ordini. Il proxy.conf.json dovrebbe gestire il reindirizzamento a http://backend:8000
+  private apiUrl = '/api/orders'; // Stesso URL base, ma ora punta ai controller Symfony
 
-  private httpOptions = {
+  // Opzioni HTTP per richieste POST e PUT (JSON standard)
+  private httpPostPutOptions = {
     headers: new HttpHeaders({
-      'Content-Type': 'application/ld+json',
-      'Accept': 'application/ld+json, application/json'
+      'Content-Type': 'application/json',
+      'Accept': 'application/json'
     })
   };
 
+  // Opzioni HTTP per richieste GET e DELETE (solo Accept JSON)
   private httpGetDeleteOptions = {
     headers: new HttpHeaders({
-      'Accept': 'application/ld+json, application/json'
+      'Accept': 'application/json'
     })
   };
 
   constructor(private http: HttpClient) { }
 
+  // GET /api/orders
   getOrders(filterDate?: string, searchTerm?: string): Observable<Order[]> {
     let params = new HttpParams();
     if (filterDate) {
-      params = params.append('date', filterDate);
+      // Adatta il nome del parametro se il backend si aspetta qualcosa di diverso
+      params = params.append('orderDate', filterDate);
     }
     if (searchTerm && searchTerm.trim() !== '') {
-      // Assicurati che il backend si aspetti 'customerName' per la ricerca generica,
-      // o adatta il nome del parametro in base ai filtri SearchFilter definiti nell'entità Order.
-      // Esempio: se SearchFilter è su 'customerName' e 'description'
-      // potresti inviare params = params.append('customerName', searchTerm.trim());
-      // o params = params.append('description', searchTerm.trim());
-      // o un parametro generico se hai un filtro custom nel backend.
-      // Per ora, manteniamo 'customerName' come nell'esempio precedente.
-      params = params.append('customerName', searchTerm.trim());
+      // Il backend controller ora deve implementare questa logica di filtro
+      // Esempio: il controller potrebbe cercare su customerName o orderNumber
+      params = params.append('q', searchTerm.trim()); // Parametro generico 'q' per la ricerca
     }
 
-    // HttpClient ora si aspetta una risposta di tipo ApiPlatformOrderCollection
-    return this.http.get<ApiPlatformOrderCollection>(this.apiUrl, { params, headers: this.httpGetDeleteOptions.headers })
+    // Il backend ora restituisce un array JSON semplice di Order[]
+    return this.http.get<Order[]>(this.apiUrl, { params, headers: this.httpGetDeleteOptions.headers })
       .pipe(
-        // Usa l'operatore 'map' per trasformare la risposta
-        map(response => {
-          // Stampa la risposta completa per debug, se necessario
-          console.log('[OrderService] Risposta completa da getOrders:', response);
-          // Estrai e restituisci solo l'array 'member'
-          if (response && response.member) {
-            return response.member;
-          }
-          // Se 'member' non è presente, restituisci un array vuoto o gestisci l'errore
-          console.warn('[OrderService] La risposta API non contiene la proprietà "member". Restituzione array vuoto.');
-          return [];
-        }),
-        tap(orders => console.log(`[OrderService] Fetched and mapped ${orders.length} orders`, orders)),
+        // Non è più necessario mappare da ApiPlatformOrderCollection
+        tap(orders => console.log(`[OrderService] Fetched ${orders.length} orders`, orders)),
         catchError(this.handleError)
       );
   }
 
+  // GET /api/orders/{id}
   getOrderById(id: string | number): Observable<Order> {
     const url = `${this.apiUrl}/${id}`;
-    // Per GET singolo, API Platform di solito restituisce direttamente l'oggetto Order, non una collezione.
-    // Quindi non è necessario 'map' qui, a meno che anche il GET singolo non sia avvolto.
-    return this.http.get<Order>(url, this.httpGetDeleteOptions)
+    return this.http.get<Order>(url, { headers: this.httpGetDeleteOptions.headers })
       .pipe(
         tap(order => console.log(`[OrderService] Fetched order id=${id}:`, order)),
         catchError(this.handleError)
       );
   }
 
-  createOrder(orderData: Omit<Order, 'id' | 'totalAmount'>): Observable<Order> {
-    return this.http.post<Order>(this.apiUrl, orderData, this.httpOptions)
+  // POST /api/orders
+  // Il tipo orderData dovrebbe corrispondere a quello che il backend si aspetta.
+  // Usiamo Omit<Order, 'id' | 'totalAmount'> e poi mappiamo a BackendOrderItemPayload internamente nel form.
+  // Qui riceviamo già il payload corretto dal form.
+  createOrder(orderPayload: {
+    orderNumber: string;
+    customerName: string;
+    orderDate: string; // ISO string
+    description?: string;
+    status: Order['status'];
+    orderItems: BackendOrderItemPayload[];
+  }): Observable<Order> {
+    return this.http.post<Order>(this.apiUrl, orderPayload, this.httpPostPutOptions)
       .pipe(
         tap(newOrder => console.log('[OrderService] Created order:', newOrder)),
         catchError(this.handleError)
       );
   }
 
-  updateOrder(id: string | number, orderData: Partial<Order>): Observable<Order> {
+  // PUT /api/orders/{id}
+  // Il tipo orderPayload qui dovrebbe essere simile a quello di createOrder o Partial<...>
+  updateOrder(id: string | number, orderPayload: any): Observable<Order> {
     const url = `${this.apiUrl}/${id}`;
-    return this.http.put<Order>(url, orderData, this.httpOptions)
+    return this.http.put<Order>(url, orderPayload, this.httpPostPutOptions)
       .pipe(
         tap(updatedOrder => console.log(`[OrderService] Updated order id=${id}:`, updatedOrder)),
         catchError(this.handleError)
       );
   }
 
+  // DELETE /api/orders/{id}
   deleteOrder(id: string | number): Observable<void> {
     const url = `${this.apiUrl}/${id}`;
-    return this.http.delete<void>(url, this.httpGetDeleteOptions)
+    // Il backend restituisce 204 No Content, quindi il tipo di risposta è void
+    return this.http.delete<void>(url, { headers: this.httpGetDeleteOptions.headers })
       .pipe(
         tap(() => console.log(`[OrderService] Deleted order id=${id}`)),
         catchError(this.handleError)
@@ -118,18 +105,18 @@ export class OrderService {
   private handleError(error: HttpErrorResponse) {
     let errorMessage = 'Si è verificato un errore sconosciuto durante la chiamata API!';
     if (error.error instanceof ErrorEvent) {
+      // Errore client-side o di rete
       errorMessage = `Errore del client: ${error.error.message}`;
     } else {
-      errorMessage = `Errore dal server (Codice: ${error.status}): ${error.message || error.statusText}`;
+      // Il backend ha restituito un codice di errore
+      // error.error potrebbe contenere il corpo della risposta JSON con i dettagli
+      let serverErrorDetails = '';
       if (error.error && typeof error.error === 'object') {
-        const serverError = error.error;
-        const details = serverError.detail || serverError.title || serverError['hydra:description'] || serverError['hydra:title'] || JSON.stringify(serverError);
-        if (details) {
-            errorMessage += `\nDettagli: ${details}`;
-        }
-      } else if (typeof error.error === 'string' && error.error.trim() !== '') {
-        errorMessage += `\nDettagli: ${error.error}`;
+        serverErrorDetails = error.error.message || error.error.detail || JSON.stringify(error.error);
+      } else if (typeof error.error === 'string') {
+        serverErrorDetails = error.error;
       }
+      errorMessage = `Errore dal server (Codice: ${error.status}): ${error.statusText || ''}. Dettagli: ${serverErrorDetails || 'N/A'}`;
     }
     console.error('[OrderService API Error]', errorMessage, '\nRisposta completa errore:', error);
     return throwError(() => new Error(errorMessage));

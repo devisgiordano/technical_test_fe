@@ -1,22 +1,20 @@
-// File: frontend/src/app/components/order-form/order-form.component.ts
+// src/app/components/order-form/order-form.component.ts
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { FormBuilder, FormGroup, FormArray, Validators, AbstractControl, ReactiveFormsModule } from '@angular/forms';
 import { Subscription } from 'rxjs';
 import { OrderService } from '../../services/order.service';
-// Assicurati che il path sia corretto per i tuoi modelli.
-// Se hai product.model.ts e order.model.ts separati in src/app/models/
-import { Order } from '../../models/order.model';
-import { Product } from '../../models/product.model';
+// Assicurati che Order, BackendOrderItemPayload, FrontendOrderItem siano importati correttamente
+import { Order, BackendOrderItemPayload, FrontendOrderItem } from '../../models/order.model';
 import { CommonModule } from '@angular/common';
+import { HttpErrorResponse } from '@angular/common/http'; // Per tipizzare l'errore
 
 @Component({
   selector: 'app-order-form',
   standalone: true,
   imports: [
     CommonModule,
-    ReactiveFormsModule,
-    RouterLink // Se usi routerLink nel template (es. per il bottone "Annulla")
+    ReactiveFormsModule
   ],
   templateUrl: './order-form.component.html',
   styleUrls: ['./order-form.component.css']
@@ -33,9 +31,6 @@ export class OrderFormComponent implements OnInit, OnDestroy {
   availableStatuses: Order['status'][] = ['Pending', 'Processing', 'Shipped', 'Delivered', 'Cancelled'];
   private routeSubscription: Subscription | undefined;
 
-  // TODO: Caricare i prodotti disponibili dal backend per la selezione nel form
-  // availableProducts: BackendProduct[] = []; // BackendProduct avrebbe id, name, currentPrice
-
   constructor(
     private fb: FormBuilder,
     private orderService: OrderService,
@@ -45,7 +40,6 @@ export class OrderFormComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.initForm();
-    // TODO: Caricare this.availableProducts se si vogliono selezionare prodotti esistenti
 
     this.routeSubscription = this.route.paramMap.subscribe(params => {
       const idFromRoute = params.get('id');
@@ -57,7 +51,7 @@ export class OrderFormComponent implements OnInit, OnDestroy {
       } else {
         this.isEditMode = false;
         this.pageTitle = 'Crea Nuovo Ordine';
-        this.addProduct(); // Aggiungi una riga di prodotto vuota per i nuovi ordini
+        this.addOrderItem();
       }
     });
   }
@@ -70,18 +64,20 @@ export class OrderFormComponent implements OnInit, OnDestroy {
     this.orderForm = this.fb.group({
       orderNumber: ['', Validators.required],
       customerName: ['', [Validators.required, Validators.minLength(3)]],
+      // Il campo del form HTML <input type="date"> restituisce una stringa yyyy-MM-dd
       orderDate: [new Date().toISOString().substring(0, 10), Validators.required],
       description: [''],
       status: ['Pending' as Order['status'], Validators.required],
-      products: this.fb.array([], Validators.minLength(1)) // Almeno un prodotto
+      orderItems: this.fb.array([], Validators.minLength(1))
     });
   }
 
   loadOrderForEditing(id: string | number): void {
     this.isLoading = true;
     this.orderService.getOrderById(id).subscribe({
-      next: (order) => {
-        const orderDateFormatted = order.orderDate ? new Date(order.orderDate).toISOString().substring(0, 10) : '';
+      next: (order: Order) => { // order.orderDate sarà una stringa ISO dal backend
+        // Per il campo <input type="date">, serve solo la parte yyyy-MM-dd
+        const orderDateFormatted = order.orderDate ? order.orderDate.substring(0, 10) : '';
         this.orderForm.patchValue({
           orderNumber: order.orderNumber,
           customerName: order.customerName,
@@ -89,38 +85,45 @@ export class OrderFormComponent implements OnInit, OnDestroy {
           description: order.description,
           status: order.status
         });
-        this.products.clear();
-        order.products.forEach(product => this.addProduct(product));
+        this.orderItems.clear();
+        order.orderItems?.forEach((item) => { // item è di tipo BackendOrderItem
+            const formItem: FrontendOrderItem = {
+                name: item.product?.name || '',
+                description: item.product?.description || '',
+                quantity: item.quantity || 1,
+                price: parseFloat(item.priceAtPurchase || item.product?.price || '0')
+            };
+            this.addOrderItem(formItem);
+        });
         this.isLoading = false;
       },
-      error: (err) => {
+      error: (err: HttpErrorResponse) => {
         this.errorMessage = `Errore caricamento ordine: ${err.message}`;
         this.isLoading = false;
       }
     });
   }
 
-  get products(): FormArray {
-    return this.orderForm.get('products') as FormArray;
+  get orderItems(): FormArray {
+    return this.orderForm.get('orderItems') as FormArray;
   }
 
-  newProductGroup(product?: Product): FormGroup {
+  newOrderItemFormGroup(itemData?: FrontendOrderItem): FormGroup {
     return this.fb.group({
-      name: [product?.name || '', Validators.required],
-      description: [product?.description || ''],
-      // CORREZIONE QUI: Validators.pattern invece di Validatorspattern
-      quantity: [product?.quantity || 1, [Validators.required, Validators.min(1), Validators.pattern("^[1-9][0-9]*$")]],
-      price: [product?.price || 0.01, [Validators.required, Validators.min(0.01)]]
+      name: [itemData?.name || '', Validators.required],
+      description: [itemData?.description || ''],
+      quantity: [itemData?.quantity || 1, [Validators.required, Validators.min(1), Validators.pattern("^[1-9][0-9]*$")]],
+      price: [itemData?.price || 0.01, [Validators.required, Validators.min(0.01)]]
     });
   }
 
-  addProduct(product?: Product): void {
-    this.products.push(this.newProductGroup(product));
+  addOrderItem(itemData?: FrontendOrderItem): void {
+    this.orderItems.push(this.newOrderItemFormGroup(itemData));
   }
 
-  removeProduct(index: number): void {
-    if (this.products.length > 1) {
-      this.products.removeAt(index);
+  removeOrderItem(index: number): void {
+    if (this.orderItems.length > 1) {
+      this.orderItems.removeAt(index);
     } else {
       alert("Un ordine deve contenere almeno un prodotto.");
     }
@@ -138,44 +141,68 @@ export class OrderFormComponent implements OnInit, OnDestroy {
     this.errorMessage = null;
     const formValue = this.orderForm.value;
 
-    const orderPayload: Omit<Order, 'id' | 'totalAmount'> = {
+    // Prepara il payload per il backend
+    // Definiamo esplicitamente il tipo del payload che inviamo al servizio
+    const payloadForService: {
+        orderNumber: string;
+        customerName: string;
+        orderDate: string; // Deve essere una stringa ISO
+        description?: string;
+        status: Order['status'];
+        orderItems: BackendOrderItemPayload[];
+    } = {
         orderNumber: formValue.orderNumber,
         customerName: formValue.customerName,
-        orderDate: new Date(formValue.orderDate).toISOString(),
+        // formValue.orderDate è 'yyyy-MM-dd'. Convertiamo in ISO string completa se necessario,
+        // o ci assicuriamo che il backend la gestisca. Per coerenza, inviamo ISO completa.
+        orderDate: new Date(formValue.orderDate).toISOString(), // Già una stringa ISO
         description: formValue.description,
-        products: formValue.products,
         status: formValue.status,
+        orderItems: formValue.orderItems.map((item: FrontendOrderItem): BackendOrderItemPayload => {
+          return {
+            product: {
+              name: item.name,
+              price: String(item.price),
+              description: item.description || undefined // Invia undefined se vuoto
+            },
+            quantity: item.quantity,
+            priceAtPurchase: String(item.price)
+          };
+        })
     };
 
+    // Ora non c'è più bisogno del cast problematico se payloadForService matcha la firma del servizio
     const operation = this.isEditMode && this.orderId
-      ? this.orderService.updateOrder(this.orderId, orderPayload as Partial<Order>)
-      : this.orderService.createOrder(orderPayload);
+      ? this.orderService.updateOrder(this.orderId, payloadForService) // Assicurati che updateOrder accetti questo tipo
+      : this.orderService.createOrder(payloadForService);
 
     operation.subscribe({
       next: (savedOrder) => {
         this.isSubmitting = false;
-        this.router.navigate(['/orders', savedOrder.id]);
+        // this.router.navigate(['/orders', savedOrder.id]); // L'ID potrebbe essere string o number
+        this.router.navigate(['/orders', String(savedOrder.id)]);
       },
-      error: (err) => this.handleSubmitError(err, this.isEditMode ? 'aggiornamento' : 'creazione')
+      error: (err: HttpErrorResponse) => this.handleSubmitError(err, this.isEditMode ? 'aggiornamento' : 'creazione')
     });
   }
 
-  private handleSubmitError(err: any, operation: string): void {
+  private handleSubmitError(err: HttpErrorResponse, operation: string): void {
     this.errorMessage = `Errore ${operation}: ${err.message || 'Dettagli nella console.'}`;
     this.isSubmitting = false;
     window.scrollTo(0,0);
-    console.error(err);
+    console.error(`Errore durante ${operation}:`, err);
   }
 
   cancel(): void {
     if (this.isEditMode && this.orderId) {
-      this.router.navigate(['/orders', this.orderId]);
+      // this.router.navigate(['/orders', this.orderId]);
+      this.router.navigate(['/orders', String(this.orderId)]);
     } else {
       this.router.navigate(['/orders']);
     }
   }
 
-  getProductControl(index: number, fieldName: string): AbstractControl | null {
-    return this.products.at(index)?.get(fieldName) || null;
+  getOrderItemControl(index: number, fieldName: string): AbstractControl | null {
+    return this.orderItems.at(index)?.get(fieldName) || null;
   }
 }

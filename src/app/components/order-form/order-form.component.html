@@ -71,66 +71,66 @@
     <div class="card mb-4 shadow-sm">
       <div class="card-header bg-light d-flex justify-content-between align-items-center">
         <h5 class="mb-0">Prodotti <span class="text-danger">*</span></h5>
-        <button type="button" class="btn btn-sm btn-outline-success" (click)="addProduct()" title="Aggiungi Prodotto">
+        <button type="button" class="btn btn-sm btn-outline-success" (click)="addOrderItem()" title="Aggiungi Prodotto">
           <i class="bi bi-plus-lg me-1"></i> Aggiungi Prodotto
         </button>
       </div>
-      <div class="card-body" formArrayName="products">
-        <div *ngIf="products.controls.length === 0 && orderForm.get('products')?.touched && orderForm.get('products')?.invalid" class="alert alert-warning text-center">
+      <div class="card-body" formArrayName="orderItems">
+        <div *ngIf="orderItems.controls.length === 0 && orderForm.get('orderItems')?.touched && orderForm.get('orderItems')?.invalid" class="alert alert-warning text-center">
           <i class="bi bi-exclamation-circle me-1"></i> L'ordine deve contenere almeno un prodotto.
         </div>
 
-        <div *ngFor="let productCtrl of products.controls; let i=index" [formGroupName]="i" class="product-item mb-3 p-3 border rounded bg-white">
+        <div *ngFor="let itemCtrl of orderItems.controls; let i=index" [formGroupName]="i" class="product-item mb-3 p-3 border rounded bg-white">
           <div class="d-flex justify-content-between align-items-center mb-2">
             <h6>Prodotto #{{i + 1}}</h6>
-            <button type="button" class="btn btn-sm btn-outline-danger" (click)="removeProduct(i)" title="Rimuovi Prodotto" [disabled]="products.controls.length <= 1">
+            <button type="button" class="btn btn-sm btn-outline-danger" (click)="removeOrderItem(i)" title="Rimuovi Prodotto" [disabled]="orderItems.controls.length <= 1">
               <i class="bi bi-trash-fill"></i>
             </button>
           </div>
           <div class="row g-3">
             <div class="col-md-12">
-              <label for="productName-{{i}}" class="form-label">Nome Prodotto <span class="text-danger">*</span></label>
-              <input type="text" id="productName-{{i}}" class="form-control" formControlName="name" placeholder="Es. T-shirt"
-                     [ngClass]="{ 'is-invalid': getProductControl(i, 'name')?.invalid && getProductControl(i, 'name')?.touched }">
-              <div *ngIf="getProductControl(i, 'name')?.invalid && getProductControl(i, 'name')?.touched" class="invalid-feedback">
+              <label for="itemName-{{i}}" class="form-label">Nome Prodotto <span class="text-danger">*</span></label>
+              <input type="text" id="itemName-{{i}}" class="form-control" formControlName="name" placeholder="Es. T-shirt"
+                     [ngClass]="{ 'is-invalid': getOrderItemControl(i, 'name')?.invalid && getOrderItemControl(i, 'name')?.touched }">
+              <div *ngIf="getOrderItemControl(i, 'name')?.invalid && getOrderItemControl(i, 'name')?.touched" class="invalid-feedback">
                 Nome prodotto obbligatorio.
               </div>
             </div>
 
             <div class="col-md-6">
-              <label for="productQuantity-{{i}}" class="form-label">Quantità <span class="text-danger">*</span></label>
-              <input type="number" id="productQuantity-{{i}}" class="form-control" formControlName="quantity"
-                     [ngClass]="{ 'is-invalid': getProductControl(i, 'quantity')?.invalid && getProductControl(i, 'quantity')?.touched }">
-              <div *ngIf="getProductControl(i, 'quantity')?.errors?.['required'] && getProductControl(i, 'quantity')?.touched" class="invalid-feedback">
+              <label for="itemQuantity-{{i}}" class="form-label">Quantità <span class="text-danger">*</span></label>
+              <input type="number" id="itemQuantity-{{i}}" class="form-control" formControlName="quantity"
+                     [ngClass]="{ 'is-invalid': getOrderItemControl(i, 'quantity')?.invalid && getOrderItemControl(i, 'quantity')?.touched }">
+              <div *ngIf="getOrderItemControl(i, 'quantity')?.errors?.['required'] && getOrderItemControl(i, 'quantity')?.touched" class="invalid-feedback">
                 Quantità obbligatoria.
               </div>
-              <div *ngIf="getProductControl(i, 'quantity')?.errors?.['min'] && getProductControl(i, 'quantity')?.touched" class="invalid-feedback">
+              <div *ngIf="getOrderItemControl(i, 'quantity')?.errors?.['min'] && getOrderItemControl(i, 'quantity')?.touched" class="invalid-feedback">
                 Minimo 1.
               </div>
-               <div *ngIf="getProductControl(i, 'quantity')?.errors?.['pattern'] && getProductControl(i, 'quantity')?.touched" class="invalid-feedback">
+               <div *ngIf="getOrderItemControl(i, 'quantity')?.errors?.['pattern'] && getOrderItemControl(i, 'quantity')?.touched" class="invalid-feedback">
                 Solo numeri interi positivi.
               </div>
             </div>
 
             <div class="col-md-6">
-              <label for="productPrice-{{i}}" class="form-label">Prezzo Unitario (€) <span class="text-danger">*</span></label>
-              <input type="number" id="productPrice-{{i}}" class="form-control" formControlName="price" step="0.01" placeholder="0.00"
-                     [ngClass]="{ 'is-invalid': getProductControl(i, 'price')?.invalid && getProductControl(i, 'price')?.touched }">
-              <div *ngIf="getProductControl(i, 'price')?.errors?.['required'] && getProductControl(i, 'price')?.touched" class="invalid-feedback">
+              <label for="itemPrice-{{i}}" class="form-label">Prezzo Unitario (€) <span class="text-danger">*</span></label>
+              <input type="number" id="itemPrice-{{i}}" class="form-control" formControlName="price" step="0.01" placeholder="0.00"
+                     [ngClass]="{ 'is-invalid': getOrderItemControl(i, 'price')?.invalid && getOrderItemControl(i, 'price')?.touched }">
+              <div *ngIf="getOrderItemControl(i, 'price')?.errors?.['required'] && getOrderItemControl(i, 'price')?.touched" class="invalid-feedback">
                  Prezzo obbligatorio.
               </div>
-              <div *ngIf="getProductControl(i, 'price')?.errors?.['min'] && getProductControl(i, 'price')?.touched" class="invalid-feedback">
+              <div *ngIf="getOrderItemControl(i, 'price')?.errors?.['min'] && getOrderItemControl(i, 'price')?.touched" class="invalid-feedback">
                  Prezzo deve essere positivo.
               </div>
             </div>
 
             <div class="col-12">
-              <label for="productDescription-{{i}}" class="form-label">Descrizione Prodotto</label>
-              <textarea id="productDescription-{{i}}" class="form-control" formControlName="description" rows="2" placeholder="Dettagli..."></textarea>
+              <label for="itemDescription-{{i}}" class="form-label">Descrizione Prodotto</label>
+              <textarea id="itemDescription-{{i}}" class="form-control" formControlName="description" rows="2" placeholder="Dettagli..."></textarea>
             </div>
           </div>
         </div>
-        <div *ngIf="orderForm.get('products')?.errors?.['minlength'] && orderForm.get('products')?.touched && products.controls.length === 0" class="alert alert-danger mt-2">
+        <div *ngIf="orderForm.get('orderItems')?.errors?.['minlength'] && orderForm.get('orderItems')?.touched && orderItems.controls.length === 0" class="alert alert-danger mt-2">
             È necessario aggiungere almeno un prodotto.
         </div>
       </div>
