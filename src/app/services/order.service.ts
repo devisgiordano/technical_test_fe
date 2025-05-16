@@ -35,10 +35,10 @@ export class OrderService {
   getOrders(filterDate?: string, searchTerm?: string): Observable<Order[]> {
     let params = new HttpParams();
     if (filterDate) {
-      params = params.append('date', filterDate);
+      params = params.append('date', filterDate); // Es: /api/orders?date=2024-12-25
     }
     if (searchTerm && searchTerm.trim() !== '') {
-      params = params.append('customerName', searchTerm.trim()); // Assumendo che il filtro 'search' cerchi su 'customerName'
+      params = params.append('customerName', searchTerm.trim()); // Es: /api/orders?search=Mario
     }
     return this.http.get<Order[]>(this.apiUrl, { params, headers: this.httpGetDeleteOptions.headers })
       .pipe(
