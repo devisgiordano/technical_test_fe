@@ -52,7 +52,7 @@
       <hr>
 
       <h4><i class="bi bi-basket3-fill me-2"></i>Prodotti nell'Ordine</h4>
-      <div *ngIf="order.products && order.products.length > 0; else noProducts" class="table-responsive mt-3">
+      <div *ngIf="order.orderItems && order.orderItems.length > 0; else noProducts" class="table-responsive mt-3">
         <table class="table table-striped table-bordered table-sm">
           <thead class="table-dark">
             <tr>
@@ -64,12 +64,12 @@
             </tr>
           </thead>
           <tbody>
-            <tr *ngFor="let product of order.products">
-              <td>{{ product.name }}</td>
-              <td>{{ product.description || '-' }}</td>
-              <td class="text-center">{{ product.quantity }}</td>
-              <td class="text-end">{{ product.price | currency:'EUR':'symbol':'1.2-2' }}</td>
-              <td class="text-end">{{ calculateProductSubtotal(product.price, product.quantity) | currency:'EUR':'symbol':'1.2-2' }}</td>
+            <tr *ngFor="let item of order.orderItems">
+              <td>{{ item.name }}</td>
+              <td>{{ item.description || '-' }}</td>
+              <td class="text-center">{{ item.quantity }}</td>
+              <td class="text-end">{{ item.price | currency:'EUR':'symbol':'1.2-2' }}</td>
+              <td class="text-end">{{ calculateProductSubtotal(item.price, item.quantity) | currency:'EUR':'symbol':'1.2-2' }}</td>
             </tr>
           </tbody>
           <tfoot *ngIf="order.totalAmount != null"> <tr>
