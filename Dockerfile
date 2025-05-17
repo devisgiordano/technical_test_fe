@@ -1,62 +1,67 @@
 # frontend/Dockerfile
-# Dockerfile per Frontend Angular (Produzione)
-# Assumes Angular project files (package.json, angular.json, src/, etc.)
-# are in the build context (la directory 'frontend/' sull'host).
+# Dockerfile per l'ambiente di sviluppo Frontend Angular
 
-# Fase 1: Costruzione dell'applicazione Angular (Builder)
-FROM node:20-alpine AS builder
-LABEL stage="angular-builder"
+# Usa un'immagine Node.js come base, versione Alpine per leggerezza
+FROM node:20-alpine
+LABEL stage="angular-development-environment"
 
-# Installa Angular CLI globalmente per il comando 'ng build'
+# Installa Angular CLI globalmente nell'immagine.
+# Questo permette di usare 'ng' direttamente nel CMD.
 RUN npm install -g @angular/cli@latest
 
-# Imposta la directory di lavoro nel container builder
+# Imposta la directory di lavoro all'interno del container.
+# Tutti i comandi successivi verranno eseguiti in questo contesto.
 WORKDIR /app
 
-# Copia i file di configurazione principali del progetto Angular.
-# Questi file saranno creati nella directory 'frontend/' dell'host
-# dal comando 'ng new'.
-COPY package.json package-lock.json* angular.json tsconfig.*.json ./
-# Copia altri file di configurazione comuni se presenti (opzionale)
-COPY .npmrc .browserslistrc ./ 2>/dev/null || true
+# Copia i file di definizione del progetto.
+# Questi sono necessari per 'npm install' se la directory node_modules (montata come volume)
+# è inizialmente vuota o se il flag '.install-complete' non è presente.
+# 'ng serve' (eseguito nel CMD) userà i file dal volume mappato per src/, angular.json, ecc.
+COPY package.json ./
+COPY package-lock.json* ./
 
-# Copia la directory 'src' del progetto Angular
-COPY src ./src
+# Le seguenti direttive COPY sono opzionali per un ambiente di sviluppo con volumi,
+# ma potrebbero essere necessarie se gli script 'npm install' (eseguiti nel CMD)
+# dipendono dalla presenza di questi file nell'immagine prima che i volumi siano attivi,
+# o se si verificano problemi di risoluzione iniziali.
+# Di solito, 'ng serve' legge questi file direttamente dai volumi mappati.
+# Se si verificano errori 'lstat' durante la build dell'immagine perché questi file
+# non esistono nel contesto di build (la tua directory locale 'frontend/'),
+# puoi crearli (anche vuoti se non hai configurazioni specifiche) o tenerli commentati.
+# COPY angular.json ./
+# COPY tsconfig.json ./
+# COPY tsconfig.app.json ./
+# COPY tsconfig.spec.json ./
+# COPY .npmrc ./
+# COPY .browserslistrc ./
 
-# Installa le dipendenze del progetto
-RUN npm install --legacy-peer-deps
+# Esponi la porta su cui Angular CLI server girerà all'interno del container.
+# La mappatura effettiva all'host avviene nel compose.yaml.
+EXPOSE 4200
 
-# Esegui la build dell'applicazione Angular per la produzione.
-# Il nome del progetto (es. 'angular-app-name') è preso da angular.json,
-# e l'output sarà in 'dist/angular-app-name'.
-# Assicurati che il nome qui sotto corrisponda a quello usato in 'ng new'
-# e nel comando COPY della fase Nginx. Per semplicità, useremo 'frontend_app_name'.
-RUN ng build --configuration production
-# Se ng build fallisce per memoria: NODE_OPTIONS=--max-old-space-size=4096 ng build --configuration production
-
-# Fase 2: Configurazione del server Nginx (Produzione)
-FROM nginx:1.25-alpine AS production
-LABEL stage="nginx-production"
-
-# Rimuovi la configurazione di default di Nginx
-RUN rm /etc/nginx/conf.d/default.conf
-
-# Copia la configurazione personalizzata di Nginx
-# (da frontend/nginx/default.conf sull'host)
-COPY nginx/default.conf /etc/nginx/conf.d/default.conf
-
-# Copia i file compilati dell'applicazione Angular dalla fase di build.
-# !!! IMPORTANTE: Sostituisci 'frontend_app_name' con il nome effettivo del tuo progetto Angular
-# (lo stesso nome che userai nel comando 'ng new ... --directory .').
-# Questo nome determina la cartella di output in /app/dist/frontend_app_name.
-COPY --from=builder /app/dist/frontend /usr/share/nginx/html
-
-# Esponi la porta 80
-EXPOSE 80
-
-# Comando per avviare Nginx
-CMD ["nginx", "-g", "daemon off;"]
-
-# Healthcheck per Nginx
-HEALTHCHECK --interval=30s --timeout=5s --retries=3 \
-  CMD wget --no-verbose --spider http://localhost/ || exit 1
+# Comando per avviare l'ambiente di sviluppo.
+# Questo script viene eseguito quando il container parte.
+# 1. Controlla se la directory 'node_modules' esiste o se un file flag '.install-complete' è presente.
+#    Il file '.install-complete' viene creato dopo un 'npm install' di successo per evitare
+#    di rieseguire 'npm install' ad ogni avvio se le dipendenze sono già nel volume.
+# 2. Se le dipendenze non sembrano installate, esegue 'npm install'.
+#    Se il tuo progetto richiede '--legacy-peer-deps', aggiungilo qui: npm install --legacy-peer-deps
+# 3. Infine, avvia il server di sviluppo Angular ('ng serve') con:
+#    --host 0.0.0.0: Rende il server accessibile dall'esterno del container (necessario per la mappatura delle porte).
+#    --port 4200: Specifica la porta su cui il server ascolta all'interno del container.
+#    --poll 1000: Abilita il polling per il rilevamento delle modifiche dei file, utile in alcuni ambienti Docker
+#                 dove il rilevamento eventi standard del filesystem potrebbe non funzionare bene con i volumi mappati.
+#    --proxy-config proxy.conf.json: Applica la configurazione del proxy per le chiamate API al backend.
+CMD sh -c " \
+      if [ ! -d \"node_modules\" ] || [ ! -f \"node_modules/.install-complete\" ]; then \
+        echo 'Installazione dipendenze npm...' && \
+        npm install && \
+        touch node_modules/.install-complete && \
+        echo 'Dipendenze npm installate.'; \
+      else \
+        echo 'Dipendenze npm già installate (trovata cartella node_modules o flag .install-complete).'; \
+      fi && \
+      echo 'Ambiente di sviluppo pronto. Puoi avviare ng serve manualmente.' && \
+      echo 'Esempio: docker-compose exec frontend ng serve --host 0.0.0.0 --port 4200 --poll 1000 --proxy-config proxy.conf.json' && \
+      tail -f /dev/null \
+    "

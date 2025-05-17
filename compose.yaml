@@ -1,37 +1,30 @@
 version: "3.9"
 
 services:
-  # Servizio Frontend per lo SVILUPPO
-  dev:
-    image: node:20-alpine
-    container_name: frontend_angular_dev_env
+  frontend: # Unico servizio, focalizzato sullo sviluppo
+    build:
+      context: .
+      dockerfile: Dockerfile # Modificato da Dockerfile.dev a Dockerfile
+    container_name: frontend_angular_dev
     working_dir: /app
-    command: sh -c "npm install -g @angular/cli@latest && echo 'Ambiente di sviluppo frontend pronto.' && tail -f /dev/null"
+    # Il comando è stato spostato nel CMD del Dockerfile
     ports:
       - "4200:4200"
     volumes:
-      - .:/app
-      - /app/node_modules # Isola node_modules nel container per prestazioni
-      - npm_cache_frontend_dev:/root/.npm
+      - .:/app # Mappa i sorgenti per il live-reloading
+      - /app/node_modules # Isola node_modules nel container per evitare conflitti con l'host
+      - npm_cache_frontend:/root/.npm # Cache per npm per velocizzare installazioni future
     networks:
-      - backend_network # Nome logico usato qui, mappato sotto
-
-  # Servizio Frontend per la PRODUZIONE
-  prod:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: frontend_angular_prod_app
-    ports:
-      - "8080:80" # Esempio, la porta host può essere diversa
-    networks:
-      - backend_network # Nome logico usato qui, mappato sotto
+      - order_app_network # Nome della rete condivisa con il backend
     restart: unless-stopped
+    environment:
+      NODE_ENV: development
+      CHOKIDAR_USEPOLLING: "true" # Utile per il live-reloading in alcuni ambienti Docker
 
 networks:
-  backend_network: # Nome logico usato nei servizi sopra
+  order_app_network:
     external: true
-    name: app-network # Nome REALE della rete Docker definita dal backend
+    name: app-network # Nome REALE della rete Docker a cui connettersi (definita dal backend o esternamente)
 
 volumes:
-  npm_cache_frontend_dev:
+  npm_cache_frontend: # Volume per la cache di npm

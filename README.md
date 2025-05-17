@@ -36,12 +36,12 @@ docker compose up --build -d
 
 **3. Entrare nel container e lanciare il server web**
 ```
-docker exec -it frontend_angular_dev_env sh
+docker exec -it frontend_angular_dev sh
 ```
 
 dalla cartella /app lanciare:
 
 ```
-ng serve --host 0.0.0.0 --port 4200 --poll 1000
+ng serve --host 0.0.0.0 --port 4200 --poll 1000 --proxy-config proxy.conf.json
 ```
 il frontend sarà disponibile all'indirizzo: http://localhost:4200

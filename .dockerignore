@@ -1,0 +1,15 @@
+# Ignora node_modules locali, verranno installate nel container
+node_modules
+
+# Ignora altri artefatti di build locali o file specifici dell'IDE
+.git
+.gitignore
+*.md
+dist
+coverage
+.angular/cache
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.vscode
+.idea
