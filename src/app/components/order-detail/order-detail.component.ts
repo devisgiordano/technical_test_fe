@@ -1,6 +1,6 @@
 // File: frontend/src/app/components/order-detail/order-detail.component.ts
 import { Component, OnInit, OnDestroy } from '@angular/core'; // Assicurati che OnInit e OnDestroy siano importati
-import { ActivatedRoute, Router, RouterLink } from '@angular/router'; // RouterLink potrebbe non servire se non usato nel template
+import { ActivatedRoute, Router } from '@angular/router'; // RouterLink potrebbe non servire se non usato nel template
 import { Subscription } from 'rxjs';
 import { OrderService } from '../../services/order.service';
 import { Order } from '../../models/order.model'; // Order model aggiornato
@@ -11,8 +11,7 @@ import { HttpErrorResponse } from '@angular/common/http'; // Per tipizzare l'err
   selector: 'app-order-detail',
   standalone: true,
   imports: [
-    CommonModule,
-    RouterLink // Rimuovi se non ci sono direttive [routerLink] nel template. I bottoni nel tuo HTML usano (click)
+    CommonModule
   ],
   templateUrl: './order-detail.component.html',
   styleUrls: ['./order-detail.component.css']
